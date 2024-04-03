@@ -61,6 +61,19 @@ object Semigroups {
   val expenses = List(Expense(1, 99), Expense(4, 35), Expense(3, 10))
   val aggregatedExpenses = expenses.reduce(expenseSemigroup.combine)
 
+  // extensions methods from Semigroups
+  import cats.syntax.semigroup._
+  //enhance existing types with |+| (combine fn)
+  // val intSum = 2 |+| "" invalid
+  val intSum = 2 |+| 3  // 2 combines 3. Requires the presence of a Semigroup[Int]
+  // intSemigroup.combine(2, 3) // thanks for extension method
+  val stringConcat = "We like " |+| "semigroups"
+  val combinedExpense = Expense(1, 232) |+| Expense(3, 453)
+
+  // general API using combine extension method |+|
+  def reducerSugar1[C](list: List[C])(implicit semigroup: Semigroup[C]): C = list.reduce(_ |+| _)
+  def reducerSugar2[C: Semigroup](list: List[C]): C = list.reduce(_ |+| _)
+
   def main(args: Array[String]): Unit = {
     println(intCombination)
     println(strCombination)
@@ -71,6 +84,8 @@ object Semigroups {
     println(reduceAll(numberOptions)) //an Option[Int] containing the sum of all elements
     println(reduceAll(stringOptions))
     println(reduceAll(expenses))
+    println(reducerSugar1(expenses))
+    println(reducerSugar2(expenses))
     /*
     * This is the kind of functionality that a Semigroup give us for free
     * */
