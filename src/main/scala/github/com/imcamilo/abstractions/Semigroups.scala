@@ -43,7 +43,7 @@ object Semigroups {
   val numbers = (1 to 10).toList
   val strs = List("I ", "started ", "to ", "like ", "semigroups")
   import cats.instances.option._ // this will bring Semigroup[Option[_]] as well
-  val numberOptionss = numbers.map(a => Option(a))
+  val numberOptions = numbers.map(a => Option(a))
   /*
   * whats a natural combination between two Option[Int]? =>
   * Compiler will produce an implicit Semigroup[Int] - Combine will produce Option[Int] with the summed elements
@@ -52,6 +52,15 @@ object Semigroups {
   * */
 
   val stringOptions = strs.map(a => Option(a))
+
+  // SUPPORTING A NEW TYPE
+  case class Expense(id: Long, amount: Double)
+  implicit val expenseSemigroup: Semigroup[Expense] = Semigroup.instance((e1, e2) => {
+    Expense(Math.max(e1.id, e2.id), e1.amount + e2.amount)
+  })
+  val expenses = List(Expense(1, 99), Expense(4, 35), Expense(3, 10))
+  val aggregatedExpenses = expenses.reduce(expenseSemigroup.combine)
+
   def main(args: Array[String]): Unit = {
     println(intCombination)
     println(strCombination)
@@ -59,8 +68,9 @@ object Semigroups {
     println(reduceAll(numbers))
     println(reduceStrings(strs))
     println(reduceAll(strs))
-    println(reduceAll(numberOptionss)) //an Option[Int] containing the sum of all elements
+    println(reduceAll(numberOptions)) //an Option[Int] containing the sum of all elements
     println(reduceAll(stringOptions))
+    println(reduceAll(expenses))
     /*
     * This is the kind of functionality that a Semigroup give us for free
     * */
