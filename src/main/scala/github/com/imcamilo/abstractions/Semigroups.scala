@@ -1,7 +1,6 @@
 package github.com.imcamilo.abstractions
 
-/*Lets start with the import for every app*/
-
+//https://typelevel.org/cats/typeclasses/semigroup.html
 object Semigroups {
 
   /*

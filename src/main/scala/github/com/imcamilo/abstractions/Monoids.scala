@@ -1,5 +1,6 @@
 package github.com.imcamilo.abstractions
 
+//https://typelevel.org/cats/typeclasses/monoid.html
 object Monoids {
 
   /*
