@@ -60,11 +60,47 @@ object Functors {
   def do10x[F[_]](container: F[Int])(implicit functor: Functor[F]): F[Int] = functor.map(container)(_ * 10)
 
   // uf
+  // example from rockthejvm. Define an object which extends Functor[Tree]
+  // functor for a binary tree
+  trait Tree[+A]
+  // smart constructors. bcs returns a general Tree[A]
+  object Tree {
+    def leaf[A](value: A): Tree[A] = Leaf(value) //returns a sub class of Tree
+    def branch[A](value: A, left: Tree[A], right: Tree[A]): Tree[A] = Branch(value, left, right) //returns a sub class of Tree
+  }
+  case class Leaf[+A](value: A) extends Tree[A]
+  case class Branch[+A](value: A, left: Tree[A], right: Tree[A]) extends Tree[A]
+
+  implicit object TreeFunctor extends Functor[Tree] {
+    override def map[A, B](fa: Tree[A])(f: A => B): Tree[B] = fa match {
+      case Leaf(v) => Leaf(f(v))
+      case Branch(v, left, right) => Branch(f(v), map(left)(f), map(right)(f))
+    }
+  }
+
+  /*EXTENSION METHOD MAP*/
+  import cats.syntax.functor._
+  val tree: Tree[Int] = Tree.branch(40, Tree.branch(5, Tree.leaf(10), Tree.leaf(30)), Tree.leaf(20))
+  val incrementedTree = tree.map(_ + 1)
+
+  /**
+   * In the scope of that map function,
+   * the compiler has access to an implicit Functor[F]
+   * And in light to the recent import with cats cats.syntax.functor._
+   * I have access to the extension method
+   * */
+  def do10xShorter1[F[_]](container: F[Int])(implicit functor: Functor[F]): F[Int] = container.map(_ * 10)
+  def do10xShorter[F[_]: Functor](container: F[Int]): F[Int] = container.map(_ * 10)
+
 
   def main(args: Array[String]): Unit = {
     println(do10x(List(1,2,3)))
     println(do10x(Option(2)))
     println(do10x(Try(2)))
+    println(do10x[Tree](Branch(30, Leaf(10), Leaf(20))))
+    println(do10x(Tree.branch(30, Tree.leaf(10), Tree.leaf(20))))
+    println(do10xShorter1(Tree.branch(30, Tree.leaf(10), Tree.leaf(20))))
+    println(do10xShorter(Tree.branch(30, Tree.leaf(10), Tree.leaf(20))))
   }
 
 }
