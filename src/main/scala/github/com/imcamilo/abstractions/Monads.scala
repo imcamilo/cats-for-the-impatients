@@ -1,5 +1,7 @@
 package github.com.imcamilo.abstractions
 
+import cats.PartialOrder
+
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -82,6 +84,9 @@ object Monads {
     /**
      * FlapMap has a very similar signature that Functor. Just the function is dff */
     def flatMap[A, B](ma: M[A])(f: A => M[B]): M[B]
+
+    /**/
+    def map[A, B](ma: M[A])(f: A => B): M[B] = flatMap(ma)(x => pure(f(x)))
   }
 
   // cats monad
@@ -134,15 +139,83 @@ object Monads {
   def getPairs[M[_], A, B](m: M[A], mb: M[B])(implicit monad: Monad[M]): M[(A, B)] =
     monad.flatMap(m)(a => monad.map(mb)(b => (a, b)))
 
+  // Extension methods for monad comes from a weird imports, them will be clear later, related to cats hierarchy
+  // extension methods in Monads are: pure - flatMap (fundamental methods on monads) two diff imports
+  //pure
+  import cats.syntax.applicative._ // weaker monad and pure is here
+  val oneOption = 1.pure[Option] // implicit Monad[Option] will be used => Some(1)
+  val oneList = 1.pure[List] // List(1)
+  //flatMap
+  import cats.syntax.flatMap._ //for now is not necessay bcs option has a flatMap method, but,
+  // when the data structure doesnt have the flatMap method, this become important
+  val oneOptionTransformed = oneOption.flatMap(x => (x + 1).pure[Option])
+
+  /*Monads are Functors. Monad extends Functors.. So*/
+  val oneOptionMap = Monad[Option].map(Option(2))(_ + 2)
+  import cats.syntax.functor._ // flatmap and map are here
+  val oneOptionMap2 = oneOption.map(_ + 2) //map is already present on option
+
+  /*if we have map and flatMap, we have access to for comprehensions*/
+  val composedOption = for {
+    one <- 1.pure[Option]
+    two <- 2.pure[Option]
+  } yield one + two
+
+  /* Shorter version of getPairs using for-comprehension*/
+
+  def getPairsFor[M[_] : Monad, A, B](m: M[A], mb: M[B]): M[(A,B)] = {
+    for {
+      a <- m
+      b <- mb
+    } yield (a, b) // same m.flatMap(a => mb.map(b => (a, b)))
+  }
+
   def main(args: Array[String]): Unit = {
     // println(listExpected)
     // println(optionExpected)
     // println(futureExpected)
     // println(aTransformedList)
     // println(aTransformedFuture)
-    println(getPairs(listNums, listChar))
-    println(getPairs(optionNum, optionChar))
-    getPairs(futureNum, futureChar).foreach(println)
+    // println(getPairs(listNums, listChar))
+    // println(getPairs(optionNum, optionChar))
+    // getPairs(futureNum, futureChar).foreach(println)
+    println(getPairsFor(listNums, listChar))
+    println(getPairsFor(optionNum, optionChar))
+    getPairsFor(futureNum, futureChar).foreach(println)
   }
+
+  /*
+  * Monad. Higher Kinded Type Class that Provides:
+  *   a pure method. To wrap a normal value into a monadic value.
+  *   a flatMap method. To transform monadic values in sequence
+  *
+  * Also can implement map in terms of pure + flatMap
+  *   Monads are natural extension of Functors
+  *
+  * import cats.syntax.applicative._ // adds the pure extension method
+  * val oneValid = 1.pure[ErrorOr]
+  * import cats.syntax.functor._ // adds the map extension method
+  * val twoValid = oneValid.map(_ + 1)
+  * import cats.syntax.flatmap._ // adds the flatMap extension method
+  * val transformedValue = oneValid.flatMap(x => (x + 1).purep[ErrorOr])
+  *
+  * So map + flatMaps = for-comprehensions
+  * val composedErrorOr = for {
+  *   one <- oneValid
+  *   two <- twoValid
+  * } yield one + two
+  *
+  * Use cases:
+  * - Sequential transformations:
+  *     - List Combinations
+  *     - Option Transformations
+  *     - Asynchronous chained computations
+  *     - Dependent computations
+  *
+  *
+  * For-comprehensions are NOT ITERATIONS
+  * Step away from the concept of iteration.
+  * FlatMap is a mental model of chained transformations
+  * */
 
 }
