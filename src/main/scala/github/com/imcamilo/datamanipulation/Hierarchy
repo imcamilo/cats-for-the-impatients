@@ -1,0 +1,5 @@
+Major Type classes
+- Semigroup:                    |+|
+- Monoid extends Semigroup:     empty, |+|
+- Functor:                      map
+- Monad extends Functor:        pure, flatMaps
