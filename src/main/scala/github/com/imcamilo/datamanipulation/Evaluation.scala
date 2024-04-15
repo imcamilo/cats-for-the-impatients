@@ -99,9 +99,9 @@ object Evaluation {
     else reverseEval(list.tail).map(_ :+ list.head)
 
   /*its safe, and tail recursive. Using defer()*/
-  def reverseEval[T](list: List[T]): Eval[List[T]] =
+  def reverseEvalBetter[T](list: List[T]): Eval[List[T]] =
     if (list.isEmpty) Eval.now(list)
-    else Eval.defer(reverseEval(list.tail).map(_ :+ list.head))
+    else Eval.defer(reverseEvalBetter(list.tail).map(_ :+ list.head))
 
   def main(args: Array[String]): Unit = {
     println(defer(Eval.now {
@@ -111,4 +111,5 @@ object Evaluation {
   }
 
   println(reverseEval((1 to 100).toList).value)
+
 }
